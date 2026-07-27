@@ -1,0 +1,355 @@
+@import "tailwindcss";
+
+/* ─── Custom Properties ─────────────────────────────────────────────────── */
+:root {
+  --bg-primary: #0B0F19;
+  --bg-secondary: #111827;
+  --bg-panel: rgba(17, 24, 39, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(6, 182, 212, 0.3);
+  --neon-cyan: #06B6D4;
+  --neon-emerald: #10B981;
+  --neon-red: #EF4444;
+  --neon-amber: #F59E0B;
+  --neon-blue: #3B82F6;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --map-tile-filter: brightness(0.9) contrast(1.1);
+}
+
+html.light {
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-panel: rgba(255, 255, 255, 0.9);
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-glow: rgba(6, 182, 212, 0.2);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --map-tile-filter: none;
+}
+
+/* ─── Global Reset ──────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+/* ─── Scrollbar Styling ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.5);
+}
+
+/* ─── Map Container ─────────────────────────────────────────────────────── */
+.maplibregl-map {
+  font-family: inherit;
+}
+
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  display: none;
+}
+
+.maplibregl-popup-content {
+  background: var(--bg-panel) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 12px 16px;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--bg-panel) !important;
+}
+
+/* ─── Signal Marker Animations ──────────────────────────────────────────── */
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: 0 0 16px 6px rgba(239, 68, 68, 0.3); }
+}
+
+@keyframes pulse-yellow {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.6); }
+  50% { box-shadow: 0 0 16px 6px rgba(245, 158, 11, 0.3); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.6); }
+  50% { box-shadow: 0 0 20px 8px rgba(16, 185, 129, 0.3); }
+}
+
+@keyframes ambulance-pulse {
+  0%, 100% { box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.7); }
+  50% { box-shadow: 0 0 24px 10px rgba(59, 130, 246, 0.7); }
+}
+
+@keyframes emergency-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes counter-tick {
+  from { transform: translateY(-20%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── Signal Node Telemetry Classes ─────────────────────────────────────── */
+.signal-node-wrapper {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.signal-node-wrapper:hover {
+  transform: scale(1.2);
+}
+
+/* Glow ring */
+.signal-node-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  opacity: 0.15;
+  transition: all 0.5s ease;
+}
+
+/* Inner core */
+.signal-node-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.5s ease;
+}
+
+.signal-node-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: white;
+}
+
+/* Floating congestion label badge */
+.signal-node-label {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 0px 4px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+/* State Styling: Normal (Red) */
+.signal-node-wrapper.normal .signal-node-glow {
+  background: var(--neon-red);
+  box-shadow: 0 0 12px 2px var(--neon-red);
+  animation: blink 2.5s infinite ease-in-out;
+}
+.signal-node-wrapper.normal .signal-node-core {
+  background: var(--neon-red);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* State Styling: Handoff (Yellow) */
+.signal-node-wrapper.handoff .signal-node-glow {
+  background: var(--neon-amber);
+  box-shadow: 0 0 16px 4px var(--neon-amber);
+  animation: blink 1.2s infinite ease-in-out;
+}
+.signal-node-wrapper.handoff .signal-node-core {
+  background: var(--neon-amber);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+.signal-node-wrapper.handoff .signal-node-label {
+  border-color: var(--neon-amber);
+  color: var(--neon-amber);
+  opacity: 1;
+}
+
+/* State Styling: Green Wave (Green) */
+.signal-node-wrapper.green-wave .signal-node-glow {
+  background: var(--neon-emerald);
+  box-shadow: 0 0 24px 8px var(--neon-emerald);
+  animation: blink 0.7s infinite ease-in-out;
+}
+.signal-node-wrapper.green-wave .signal-node-core {
+  background: var(--neon-emerald);
+  border-color: var(--neon-emerald);
+  transform: scale(1.2);
+}
+.signal-node-wrapper.green-wave .signal-node-label {
+  border-color: var(--neon-emerald);
+  color: var(--neon-emerald);
+  opacity: 1;
+}
+
+
+
+/* ─── Ambulance Marker ──────────────────────────────────────────────────── */
+.ambulance-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border: 3px solid white;
+  animation: ambulance-pulse 0.6s ease-in-out infinite;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+}
+
+.ambulance-marker::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  animation: emergency-ring 1.5s ease-out infinite;
+}
+
+.ambulance-marker::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  animation: emergency-ring 1.5s ease-out infinite 0.75s;
+}
+
+/* ─── Hospital Marker ───────────────────────────────────────────────────── */
+.hospital-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #DC2626, #991B1B);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
+}
+
+/* ─── Glassmorphism Panels ──────────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-light {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+/* ─── Terminal Styling ──────────────────────────────────────────────────── */
+.terminal-line {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* ─── Grid Overlay ──────────────────────────────────────────────────────── */
+.grid-overlay {
+  background-image: 
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.scanline-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(6, 182, 212, 0.015) 50%,
+    transparent 100%
+  );
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+/* ─── Neon Glow Text ────────────────────────────────────────────────────── */
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.text-glow-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.2);
+}
